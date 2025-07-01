@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetroGames</title>
+    <style>
+        /* Estilos generales */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Press Start 2P', cursive;
+        }
+
+        body {
+            background-color: #121212;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        /* Menú principal */
+        .menu {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            text-align: center;
+        }
+
+        .menu h1 {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            color: #f8d210;
+            text-shadow: 4px 4px 0 #ff0000;
+        }
+
+        .menu button {
+            background: #ff0000;
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            margin: 10px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .menu button:hover {
+            background: #f8d210;
+            color: #000;
+            transform: scale(1.1);
+        }
+
+        /* Juegos */
+        .game-container {
+            display: none;
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #pacman-game {
+            background: #000;
+        }
+
+        #tic-tac-toe {
+            background: #1a1a2e;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #snake-game {
+            background: #16213e;
+        }
+
+        /* Botón de volver */
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: #f8d210;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            z-index: 100;
+            border-radius: 5px;
+        }
+
+        /* Estilos para el 3 en raya */
+        #tictactoe-board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-gap: 10px;
+            margin: 20px 0;
+        }
+
+        #tictactoe-board div {
+            width: 100px;
+            height: 100px;
+            background: #fff;
+            color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            cursor: pointer;
+        }
+
+        #difficulty {
+            margin-top: 20px;
+        }
+
+        #difficulty button {
+            background: #ff0000;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .menu h1 {
+                font-size: 2rem;
+            }
+            .menu button {
+                padding: 10px 20px;
+                font-size: 1rem;
+            }
+            #tictactoe-board {
+                grid-template-columns: repeat(3, 80px);
+            }
+            #tictactoe-board div {
+                width: 80px;
+                height: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Menú Principal -->
+    <div class="menu" id="menu">
+        <h1>RETRO GAMES</h1>
+        <button onclick="startGame('pacman')">COMECOCOS</button>
+        <button onclick="startGame('tictactoe')">3 EN RAYA</button>
+        <button onclick="startGame('snake')">SNAKE</button>
+    </div>
+
+    <!-- Juegos -->
+    <div class="game-container" id="pacman-game">
+        <button class="back-button" onclick="backToMenu()">Volver</button>
+        <canvas id="pacman-canvas"></canvas>
+    </div>
+
+    <div class="game-container" id="tic-tac-toe">
+        <button class="back-button" onclick="backToMenu()">Volver</button>
+        <h2 style="margin-bottom: 20px; color: #f8d210;">3 EN RAYA</h2>
+        <div id="tictactoe-board"></div>
+        <div id="difficulty">
+            <h3 style="margin: 10px; color: #fff;">Dificultad:</h3>
+            <button onclick="setDifficulty('easy')">Fácil</button>
+            <button onclick="setDifficulty('medium')">Medio</button>
+            <button onclick="setDifficulty('hard')">Difícil</button>
+        </div>
+        <p id="game-status" style="margin-top: 20px; color: #f8d210;"></p>
+    </div>
+
+    <div class="game-container" id="snake-game">
+        <button class="back-button" onclick="backToMenu()">Volver</button>
+        <canvas id="snake-canvas"></canvas>
+    </div>
+
+    <script>
+        // ===== Navegación entre juegos =====
+        function startGame(game) {
+            document.getElementById('menu').style.display = 'none';
+            document.getElementById(`${game}-game`).style.display = 'block';
+            
+            if (game === 'pacman') initPacman();
+            else if (game === 'tictactoe') initTicTacToe();
+            else if (game === 'snake') initSnake();
+        }
+
+        function backToMenu() {
+            document.querySelectorAll('.game-container').forEach(game => {
+                game.style.display = 'none';
+            });
+            document.getElementById('menu').style.display = 'flex';
+            location.reload(); // Reinicia los juegos al salir
+        }
+
+        // ===== Comecocos (Pac-Man) =====
+        function initPacman() {
+            const canvas = document.getElementById('pacman-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            // Tamaño de la celda y mapa
+            const gridSize = 20;
+            const pacman = {
+                x: 10,
+                y: 10,
+                radius: gridSize / 2,
+                speed: 2,
+                direction: { x: 0, y: 0 },
+                mouthAngle: 0.2
+            };
+
+            // Fantasmas (enemigos)
+            const ghosts = [
+                { x: 15, y: 10, color: 'red', speed: 1 },
+                { x: 10, y: 15, color: 'pink', speed: 1.2 },
+                { x: 20, y: 10, color: 'cyan', speed: 0.8 }
+            ];
+
+            // Puntos
+            const dots = [];
+            for (let x = 0; x < canvas.width / gridSize; x++) {
+                for (let y = 0; y < canvas.height / gridSize; y++) {
+                    dots.push({ x, y });
+                }
+            }
+
+            // Movimiento del Comecocos
+            document.addEventListener('keydown', (e) => {
+                switch (e.key) {
+                    case 'ArrowUp': pacman.direction = { x: 0, y: -1 }; break;
+                    case 'ArrowDown': pacman.direction = { x: 0, y: 1 }; break;
+                    case 'ArrowLeft': pacman.direction = { x: -1, y: 0 }; break;
+                    case 'ArrowRight': pacman.direction = { x: 1, y: 0 }; break;
+                }
+            });
+
+            // Dibujar el juego
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Dibujar puntos
+                ctx.fillStyle = 'white';
+                dots.forEach(dot => {
+                    ctx.beginPath();
+                    ctx.arc(dot.x * gridSize + gridSize / 2, dot.y * gridSize + gridSize / 2, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+
+                // Dibujar Comecocos
+                ctx.fillStyle = 'yellow';
+                ctx.beginPath();
+                ctx.arc(
+                    pacman.x * gridSize + gridSize / 2,
+                    pacman.y * gridSize + gridSize / 2,
+                    pacman.radius,
+                    pacman.mouthAngle * Math.PI,
+                    (2 - pacman.mouthAngle) * Math.PI
+                );
+                ctx.lineTo(pacman.x * gridSize + gridSize / 2, pacman.y * gridSize + gridSize / 2);
+                ctx.fill();
+
+                // Animación de la boca
+                pacman.mouthAngle = (pacman.mouthAngle + 0.05) % 0.4;
+
+                // Mover Comecocos
+                pacman.x += pacman.direction.x * pacman.speed / 10;
+                pacman.y += pacman.direction.y * pacman.speed / 10;
+
+                // Limitar posición dentro del canvas
+                pacman.x = Math.max(0, Math.min(canvas.width / gridSize - 1, pacman.x));
+                pacman.y = Math.max(0, Math.min(canvas.height / gridSize - 1, pacman.y));
+
+                // Dibujar fantasmas y moverlos hacia el Comecocos
+                ghosts.forEach(ghost => {
+                    ctx.fillStyle = ghost.color;
+                    ctx.beginPath();
+                    ctx.arc(
+                        ghost.x * gridSize + gridSize / 2,
+                        ghost.y * gridSize + gridSize / 2,
+                        gridSize / 2,
+                        0,
+                        Math.PI * 2
+                    );
+                    ctx.fill();
+
+                    // Perseguir al Comecocos
+                    const dx = pacman.x - ghost.x;
+                    const dy = pacman.y - ghost.y;
+                    ghost.x += Math.sign(dx) * ghost.speed / 10;
+                    ghost.y += Math.sign(dy) * ghost.speed / 10;
+                });
+
+                requestAnimationFrame(draw);
+            }
+
+            draw();
+        }
+
+        // ===== 3 en Raya (Tic-Tac-Toe) =====
+        let currentPlayer = 'X';
+        let difficulty = 'easy';
+        let board = ['', '', '', '', '', '', '', '', ''];
+
+        function initTicTacToe() {
+            const boardElement = document.getElementById('tictactoe-board');
+            boardElement.innerHTML = '';
+            board = ['', '', '', '', '', '', '', '', ''];
+            currentPlayer = 'X';
+
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.setAttribute('data-index', i);
+                cell.addEventListener('click', () => makeMove(i));
+                boardElement.appendChild(cell);
+            }
+        }
+
+        function setDifficulty(level) {
+            difficulty = level;
+            document.getElementById('game-status').textContent = `Dificultad: ${level}`;
+            initTicTacToe();
+        }
+
+        function makeMove(index) {
+            if (board[index] !== '' || checkWinner()) return;
+
+            board[index] = currentPlayer;
+            document.querySelector(`[data-index="${index}"]`).textContent = currentPlayer;
+
+            if (checkWinner()) {
+                document.getElementById('game-status').textContent = `¡${currentPlayer} gana!`;
+                return;
+            }
+
+            if (!board.includes('')) {
+                document.getElementById('game-status').textContent = '¡Empate!';
+                return;
+            }
+
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+
+            // Turno de la IA
+            if (currentPlayer === 'O') {
+                setTimeout(() => {
+                    let move;
+                    if (difficulty === 'easy') {
+                        move = easyAI();
+                    } else if (difficulty === 'medium') {
+                        move = Math.random() > 0.5 ? easyAI() : mediumAI();
+                    } else {
+                        move = mediumAI();
+                    }
+                    makeMove(move);
+                }, 500);
+            }
+        }
+
+        function easyAI() {
+            const emptyCells = board.map((cell, index) => cell === '' ? index : null).filter(val => val !== null);
+            return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+        }
+
+        function mediumAI() {
+            // Primero revisa si puede ganar
+            for (let i = 0; i < 9; i++) {
+                if (board[i] === '') {
+                    board[i] = 'O';
+                    if (checkWinner()) {
+                        board[i] = '';
+                        return i;
+                    }
+                    board[i] = '';
+                }
+            }
+
+            // Luego bloquea al jugador
+            for (let i = 0; i < 9; i++) {
+                if (board[i] === '') {
+                    board[i] = 'X';
+                    if (checkWinner()) {
+                        board[i] = '';
+                        return i;
+                    }
+                    board[i] = '';
+                }
+            }
+
+            return easyAI();
+        }
+
+        function checkWinner() {
+            const winPatterns = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // Filas
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columnas
+                [0, 4, 8], [2, 4, 6]             // Diagonales
+            ];
+
+            for (const pattern of winPatterns) {
+                const [a, b, c] = pattern;
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // ===== Snake =====
+        function initSnake() {
+            const canvas = document.getElementById('snake-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const gridSize = 20;
+            let snake = [{ x: 10, y: 10 }];
+            let food = { x: 15, y: 15 };
+            let direction = { x: 0, y: 0 };
+
+            document.addEventListener('keydown', (e) => {
+                switch (e.key) {
+                    case 'ArrowUp': if (direction.y === 0) direction = { x: 0, y: -1 }; break;
+                    case 'ArrowDown': if (direction.y === 0) direction = { x: 0, y: 1 }; break;
+                    case 'ArrowLeft': if (direction.x === 0) direction = { x: -1, y: 0 }; break;
+                    case 'ArrowRight': if (direction.x === 0) direction = { x: 1, y: 0 }; break;
+                }
+            });
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Dibujar serpiente
+                ctx.fillStyle = 'green';
+                snake.forEach(segment => {
+                    ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize, gridSize);
+                });
+
+                // Dibujar comida
+                ctx.fillStyle = 'red';
+                ctx.fillRect(food.x * gridSize, food.y * gridSize, gridSize, gridSize);
+
+                // Mover serpiente
+                const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
+                snake.unshift(head);
+
+                // Comprobar si come
+                if (head.x === food.x && head.y === food.y) {
+                    food = {
+                        x: Math.floor(Math.random() * (canvas.width / gridSize)),
+                        y: Math.floor(Math.random() * (canvas.height / gridSize))
+                    };
+                } else {
+                    snake.pop();
+                }
+
+                // Comprobar colisiones
+                if (
+                    head.x < 0 || head.x >= canvas.width / gridSize ||
+                    head.y < 0 || head.y >= canvas.height / gridSize ||
+                    snake.slice(1).some(segment => segment.x === head.x && segment.y === head.y)
+                ) {
+                    alert('¡Game Over!');
+                    backToMenu();
+                    return;
+                }
+
+                requestAnimationFrame(draw);
+            }
+
+            draw();
+        }
+    </script>
+</body>
+</html>
