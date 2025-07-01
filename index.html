@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcade Retro</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Press Start 2P', cursive;
+        }
+        
+        body {
+            background-color: #0f0f1a;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        #main-menu {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        }
+        
+        .title {
+            font-size: 3rem;
+            margin-bottom: 2rem;
+            color: #ff0;
+            text-shadow: 5px 5px 0 #f00, -2px -2px 0 #00f;
+            animation: glow 1s ease-in-out infinite alternate;
+        }
+        
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #ff0, 0 0 20px #ff0;
+            }
+            to {
+                text-shadow: 0 0 10px #fff, 0 0 20px #ff0, 0 0 30px #ff0, 0 0 40px #ff0;
+            }
+        }
+        
+        .games-container {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .game-card {
+            width: 200px;
+            height: 200px;
+            background-color: #1a1a2e;
+            border: 4px solid #ff0;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .game-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px #ff0;
+        }
+        
+        .game-card::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0) 45%,
+                rgba(255, 255, 255, 0.5) 50%,
+                rgba(255, 255, 255, 0) 55%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+        
+        @keyframes shine {
+            0% {
+                left: -50%;
+                top: -50%;
+            }
+            100% {
+                left: 150%;
+                top: 150%;
+            }
+        }
+        
+        .game-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .game-title {
+            font-size: 0.9rem;
+            text-align: center;
+        }
+        
+        .instructions {
+            margin-top: 2rem;
+            font-size: 0.8rem;
+            color: #0f0;
+            text-align: center;
+        }
+        
+        .game-screen {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+            position: relative;
+        }
+        
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background-color: #f00;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 100;
+        }
+        
+        .back-btn:hover {
+            background-color: #ff0;
+            color: #000;
+        }
+        
+        /* Estilos específicos para Comecocos */
+        #pacman-screen {
+            background-color: #000;
+        }
+        
+        #pacman-canvas {
+            border: 4px solid #ff0;
+        }
+        
+        /* Estilos para 3 en raya */
+        #tic-tac-toe-screen {
+            background-color: #1a1a2e;
+        }
+        
+        .tic-tac-toe-options {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .tic-tac-toe-btn {
+            padding: 10px 20px;
+            background-color: #00f;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .tic-tac-toe-btn:hover {
+            background-color: #ff0;
+            color: #000;
+        }
+        
+        .difficulty-select {
+            margin-bottom: 1rem;
+        }
+        
+        #tic-tac-toe-board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 5px;
+            background-color: #ff0;
+        }
+        
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            cursor: pointer;
+        }
+        
+        .cell:hover {
+            background-color: #16213e;
+        }
+        
+        .x-symbol {
+            color: #f00;
+        }
+        
+        .o-symbol {
+            color: #00f;
+        }
+        
+        .game-status {
+            margin-top: 1rem;
+            font-size: 1.2rem;
+            color: #ff0;
+        }
+        
+        /* Estilos para Snake */
+        #snake-screen {
+            background-color: #000;
+        }
+        
+        #snake-canvas {
+            border: 4px solid #0f0;
+        }
+        
+        .snake-controls {
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: #0f0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Menú principal -->
+    <div id="main-menu">
+        <h1 class="title">ARCADE RETRO</h1>
+        <div class="games-container">
+            <div class="game-card" id="pacman-card">
+                <div class="game-icon">👻</div>
+                <div class="game-title">COMECOCOS</div>
+            </div>
+            <div class="game-card" id="tic-tac-toe-card">
+                <div class="game-icon">⭕❌</div>
+                <div class="game-title">3 EN RAYA</div>
+            </div>
+            <div class="game-card" id="snake-card">
+                <div class="game-icon">🐍</div>
+                <div class="game-title">SNAKE</div>
+            </div>
+        </div>
+        <p class="instructions">Selecciona un juego para comenzar</p>
+    </div>
+    
+    <!-- Pantalla de Comecocos -->
+    <div class="game-screen" id="pacman-screen">
+        <button class="back-btn">Volver al Menú</button>
+        <canvas id="pacman-canvas" width="600" height="600"></canvas>
+    </div>
+    
+    <!-- Pantalla de 3 en raya -->
+    <div class="game-screen" id="tic-tac-toe-screen">
+        <button class="back-btn">Volver al Menú</button>
+        <div class="tic-tac-toe-options">
+            <button class="tic-tac-toe-btn" id="play-vs-ai">Jugar vs IA</button>
+            <button class="tic-tac-toe-btn" id="play-vs-human">2 Jugadores</button>
+        </div>
+        <div class="difficulty-select" id="difficulty-select" style="display: none;">
+            <select id="difficulty">
+                <option value="easy">Fácil</option>
+                <option value="medium">Medio</option>
+                <option value="hard">Difícil</option>
+            </select>
+            <button class="tic-tac-toe-btn" id="start-ai-game">Comenzar</button>
+        </div>
+        <div id="tic-tac-toe-board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+        <div class="game-status" id="game-status">Elige un modo de juego</div>
+    </div>
+    
+    <!-- Pantalla de Snake -->
+    <div class="game-screen" id="snake-screen">
+        <button class="back-btn">Volver al Menú</button>
+        <canvas id="snake-canvas" width="400" height="400"></canvas>
+        <div class="snake-controls">
+            Usa las flechas del teclado para moverte
+        </div>
+    </div>
+    
+    <!-- Efectos de sonido -->
+    <audio id="menu-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3"></audio>
+    <audio id="game-start-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-game-show-suspense-waiting-668.mp3"></audio>
+    <audio id="pacman-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-explosion-2759.mp3"></audio>
+    <audio id="tic-tac-toe-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-plastic-coin-drop-1124.mp3"></audio>
+    <audio id="snake-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3"></audio>
+    
+    <script>
+        // Variables globales
+        let currentGame = null;
+        let gameMode = null;
+        let difficulty = 'medium';
+        let ticTacToeBoard = ['', '', '', '', '', '', '', '', ''];
+        let currentPlayer = 'X';
+        let gameActive = false;
+        
+        // Elementos del DOM
+        const mainMenu = document.getElementById('main-menu');
+        const pacmanScreen = document.getElementById('pacman-screen');
+        const ticTacToeScreen = document.getElementById('tic-tac-toe-screen');
+        const snakeScreen = document.getElementById('snake-screen');
+        const backBtns = document.querySelectorAll('.back-btn');
+        
+        // Event listeners para los botones de juego
+        document.getElementById('pacman-card').addEventListener('click', () => {
+            playSound('menu-sound');
+            showGameScreen('pacman');
+            initPacman();
+        });
+        
+        document.getElementById('tic-tac-toe-card').addEventListener('click', () => {
+            playSound('menu-sound');
+            showGameScreen('tic-tac-toe');
+        });
+        
+        document.getElementById('snake-card').addEventListener('click', () => {
+            playSound('menu-sound');
+            showGameScreen('snake');
+            initSnake();
+        });
+        
+        // Event listeners para los botones de volver
+        backBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                playSound('menu-sound');
+                showMainMenu();
+                if (currentGame === 'pacman') {
+                    stopPacman();
+                } else if (currentGame === 'snake') {
+                    stopSnake();
+                }
+            });
+        });
+        
+        // Mostrar pantalla de juego
+        function showGameScreen(game) {
+            mainMenu.style.display = 'none';
+            pacmanScreen.style.display = 'none';
+            ticTacToeScreen.style.display = 'none';
+            snakeScreen.style.display = 'none';
+            
+            currentGame = game;
+            
+            if (game === 'pacman') {
+                pacmanScreen.style.display = 'flex';
+                playSound('game-start-sound');
+            } else if (game === 'tic-tac-toe') {
+                ticTacToeScreen.style.display = 'flex';
+                playSound('game-start-sound');
+            } else if (game === 'snake') {
+                snakeScreen.style.display = 'flex';
+                playSound('game-start-sound');
+            }
+        }
+        
+        // Mostrar menú principal
+        function showMainMenu() {
+            mainMenu.style.display = 'flex';
+            pacmanScreen.style.display = 'none';
+            ticTacToeScreen.style.display = 'none';
+            snakeScreen.style.display = 'none';
+            currentGame = null;
+        }
+        
+        // Reproducir sonidos
+        function playSound(soundId) {
+            const sound = document.getElementById(soundId);
+            sound.currentTime = 0;
+            sound.play();
+        }
+        
+        // ========== COMECOCOS ==========
+        let pacman = {
+            x: 300,
+            y: 300,
+            radius: 15,
+            speed: 5,
+            direction: { x: 0, y: 0 },
+            nextDirection: { x: 0, y: 0 },
+            mouthAngle: 0,
+            mouthOpen: true
+        };
+        
+        let ghosts = [
+            { x: 100, y: 100, radius: 15, speed: 3, color: '#f00', direction: { x: 1, y: 0 } },
+            { x: 500, y: 100, radius: 15, speed: 3, color: '#0ff', direction: { x: -1, y: 0 } },
+            { x: 100, y: 500, radius: 15, speed: 3, color: '#f0f', direction: { x: 0, y: -1 } },
+            { x: 500, y: 500, radius: 15, speed: 3, color: '#ff0', direction: { x: 0, y: -1 } }
+        ];
+        
+        let dots = [];
+        let score = 0;
+        let pacmanAnimationId;
+        let pacmanCtx;
+        
+        function initPacman() {
+            const canvas = document.getElementById('pacman-canvas');
+            pacmanCtx = canvas.getContext('2d');
+            
+            // Inicializar puntos
+            dots = [];
+            for (let x = 30; x < canvas.width; x += 60) {
+                for (let y = 30; y < canvas.height; y += 60) {
+                    dots.push({ x, y, radius: 5, eaten: false });
+                }
+            }
+            
+            score = 0;
+            pacman = {
+                x: 300,
+                y: 300,
+                radius: 15,
+                speed: 5,
+                direction: { x: 0, y: 0 },
+                nextDirection: { x: 0, y: 0 },
+                mouthAngle: 0,
+                mouthOpen: true
+            };
+            
+            // Event listeners para controles
+            document.addEventListener('keydown', handlePacmanKeyDown);
+            
+            // Iniciar animación
+            pacmanAnimationId = requestAnimationFrame(updatePacman);
+        }
+        
+        function stopPacman() {
+            cancelAnimationFrame(pacmanAnimationId);
+            document.removeEventListener('keydown', handlePacmanKeyDown);
+        }
+        
+        function handlePacmanKeyDown(e) {
+            switch (e.key) {
+                case 'ArrowUp':
+                    pacman.nextDirection = { x: 0, y: -1 };
+                    break;
+                case 'ArrowDown':
+                    pacman.nextDirection = { x: 0, y: 1 };
+                    break;
+                case 'ArrowLeft':
+                    pacman.nextDirection = { x: -1, y: 0 };
+                    break;
+                case 'ArrowRight':
+                    pacman.nextDirection = { x: 1, y: 0 };
+                    break;
+            }
+        }
+        
+        function updatePacman() {
+            // Limpiar canvas
+            pacmanCtx.fillStyle = '#000';
+            pacmanCtx.fillRect(0, 0, 600, 600);
+            
+            // Actualizar dirección si es posible
+            const nextX = pacman.x + pacman.nextDirection.x * pacman.speed;
+            const nextY = pacman.y + pacman.nextDirection.y * pacman.speed;
+            
+            if (nextX > pacman.radius && nextX < 600 - pacman.radius &&
+                nextY > pacman.radius && nextY < 600 - pacman.radius) {
+                pacman.direction = { ...pacman.nextDirection };
+            }
+            
+            // Mover Comecocos
+            pacman.x += pacman.direction.x * pacman.speed;
+            pacman.y += pacman.direction.y * pacman.speed;
+            
+            // Limitar dentro del canvas
+            pacman.x = Math.max(pacman.radius, Math.min(600 - pacman.radius, pacman.x));
+            pacman.y = Math.max(pacman.radius, Math.min(600 - pacman.radius, pacman.y));
+            
+            // Animación de la boca
+            if (pacman.mouthOpen) {
+                pacman.mouthAngle += 0.1;
+                if (pacman.mouthAngle >= Math.PI / 4) {
+                    pacman.mouthOpen = false;
+                }
+            } else {
+                pacman.mouthAngle -= 0.1;
+                if (pacman.mouthAngle <= 0) {
+                    pacman.mouthOpen = true;
+                }
+            }
+            
+            // Dibujar puntos
+            dots.forEach(dot => {
+                if (!dot.eaten) {
+                    const distance = Math.sqrt(
+                        Math.pow(pacman.x - dot.x, 2) + Math.pow(pacman.y - dot.y, 2)
+                    );
+                    
+                    if (distance < pacman.radius + dot.radius) {
+                        dot.eaten = true;
+                        score += 10;
+                        playSound('pacman-sound');
+                    }
+                    
+                    pacmanCtx.fillStyle = '#fff';
+                    pacmanCtx.beginPath();
+                    pacmanCtx.arc(dot.x, dot.y, dot.radius, 0, Math.PI * 2);
+                    pacmanCtx.fill();
+                }
+            });
+            
+            // Dibujar Comecocos
+            pacmanCtx.fillStyle = '#ff0';
+            pacmanCtx.beginPath();
+            
+            let startAngle, endAngle;
+            if (pacman.direction.x === 1) {
+                startAngle = pacman.mouthAngle;
+                endAngle = Math.PI * 2 - pacman.mouthAngle;
+            } else if (pacman.direction.x === -1) {
+                startAngle = Math.PI + pacman.mouthAngle;
+                endAngle = Math.PI - pacman.mouthAngle;
+            } else if (pacman.direction.y === -1) {
+                startAngle = Math.PI * 1.5 + pacman.mouthAngle;
+                endAngle = Math.PI * 1.5 - pacman.mouthAngle;
+            } else if (pacman.direction.y === 1) {
+                startAngle = Math.PI * 0.5 + pacman.mouthAngle;
+                endAngle = Math.PI * 0.5 - pacman.mouthAngle;
+            } else {
+                startAngle = pacman.mouthAngle;
+                endAngle = Math.PI * 2 - pacman.mouthAngle;
+            }
+            
+            pacmanCtx.arc(pacman.x, pacman.y, pacman.radius, startAngle, endAngle);
+            
+            if (pacman.direction.x !== 0 || pacman.direction.y !== 0) {
+                pacmanCtx.lineTo(pacman.x, pacman.y);
+            }
+            
+            pacmanCtx.fill();
+            
+            // Mover y dibujar fantasmas
+            ghosts.forEach(ghost => {
+                // Inteligencia simple: perseguir a Comecocos
+                const dx = pacman.x - ghost.x;
+                const dy = pacman.y - ghost.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // Cambiar dirección ocasionalmente
+                if (Math.random() < 0.02 || ghost.direction.x === 0 && ghost.direction.y === 0) {
+                    const directions = [
+                        { x: 1, y: 0 }, { x: -1, y: 0 }, 
+                        { x: 0, y: 1 }, { x: 0, y: -1 }
+                    ];
+                    
+                    // Elegir dirección que acerque a Comecocos
+                    let bestDir = ghost.direction;
+                    let minDistance = Infinity;
+                    
+                    directions.forEach(dir => {
+                        const newX = ghost.x + dir.x * ghost.speed;
+                        const newY = ghost.y + dir.y * ghost.speed;
+                        
+                        if (newX > ghost.radius && newX < 600 - ghost.radius &&
+                            newY > ghost.radius && newY < 600 - ghost.radius) {
+                            const newDx = pacman.x - newX;
+                            const newDy = pacman.y - newY;
+                            const newDistance = Math.sqrt(newDx * newDx + newDy * newDy);
+                            
+                            if (newDistance < minDistance) {
+                                minDistance = newDistance;
+                                bestDir = dir;
+                            }
+                        }
+                    });
+                    
+                    ghost.direction = bestDir;
+                }
+                
+                ghost.x += ghost.direction.x * ghost.speed;
+                ghost.y += ghost.direction.y * ghost.speed;
+                
+                // Limitar dentro del canvas
+                ghost.x = Math.max(ghost.radius, Math.min(600 - ghost.radius, ghost.x));
+                ghost.y = Math.max(ghost.radius, Math.min(600 - ghost.radius, ghost.y));
+                
+                // Dibujar fantasma
+                pacmanCtx.fillStyle = ghost.color;
+                pacmanCtx.beginPath();
+                pacmanCtx.arc(ghost.x, ghost.y, ghost.radius, 0, Math.PI);
+                
+                // Parte inferior del fantasma
+                for (let i = 0; i < 5; i++) {
+                    const x = ghost.x - ghost.radius + (ghost.radius * 2 / 4) * i;
+                    const y = ghost.y + Math.sin(i * 0.5) * 5;
+                    if (i === 0) {
+                        pacmanCtx.lineTo(x, y);
+                    } else {
+                        pacmanCtx.lineTo(x, y);
+                    }
+                }
+                
+                pacmanCtx.fill();
+                
+                // Ojos
+                pacmanCtx.fillStyle = '#fff';
+                pacmanCtx.beginPath();
+                pacmanCtx.arc(ghost.x - 5, ghost.y - 5, 4, 0, Math.PI * 2);
+                pacmanCtx.arc(ghost.x + 5, ghost.y - 5, 4, 0, Math.PI * 2);
+                pacmanCtx.fill();
+                
+                // Pupilas
+                pacmanCtx.fillStyle = '#00f';
+                pacmanCtx.beginPath();
+                pacmanCtx.arc(ghost.x - 5 + ghost.direction.x * 2, ghost.y - 5 + ghost.direction.y * 2, 2, 0, Math.PI * 2);
+                pacmanCtx.arc(ghost.x + 5 + ghost.direction.x * 2, ghost.y - 5 + ghost.direction.y * 2, 2, 0, Math.PI * 2);
+                pacmanCtx.fill();
+                
+                // Detectar colisión con Comecocos
+                const ghostDistance = Math.sqrt(
+                    Math.pow(pacman.x - ghost.x, 2) + Math.pow(pacman.y - ghost.y, 2)
+                );
+                
+                if (ghostDistance < pacman.radius + ghost.radius) {
+                    // Game over
+                    alert(`Game Over! Puntuación: ${score}`);
+                    showMainMenu();
+                    stopPacman();
+                    return;
+                }
+            });
+            
+            // Mostrar puntuación
+            pacmanCtx.fillStyle = '#fff';
+            pacmanCtx.font = '20px "Press Start 2P"';
+            pacmanCtx.fillText(`Puntuación: ${score}`, 20, 30);
+            
+            // Verificar si se han comido todos los puntos
+            if (dots.every(dot => dot.eaten)) {
+                alert(`¡Ganaste! Puntuación: ${score}`);
+                showMainMenu();
+                stopPacman();
+                return;
+            }
+            
+            pacmanAnimationId = requestAnimationFrame(updatePacman);
+        }
+        
+        // ========== 3 EN RAYA ==========
+        document.getElementById('play-vs-ai').addEventListener('click', () => {
+            playSound('tic-tac-toe-sound');
+            gameMode = 'ai';
+            document.getElementById('difficulty-select').style.display = 'block';
+            document.getElementById('game-status').textContent = 'Selecciona dificultad';
+        });
+        
+        document.getElementById('play-vs-human').addEventListener('click', () => {
+            playSound('tic-tac-toe-sound');
+            gameMode = 'human';
+            document.getElementById('difficulty-select').style.display = 'none';
+            startGame();
+        });
+        
+        document.getElementById('start-ai-game').addEventListener('click', () => {
+            playSound('tic-tac-toe-sound');
+            difficulty = document.getElementById('difficulty').value;
+            startGame();
+        });
+        
+        function startGame() {
+            ticTacToeBoard = ['', '', '', '', '', '', '', '', ''];
+            currentPlayer = 'X';
+            gameActive = true;
+            
+            document.getElementById('game-status').textContent = 
+                gameMode === 'human' ? 'Turno del Jugador X' : 'Tu turno (X)';
+            
+            // Limpiar tablero
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.textContent = '';
+                cell.classList.remove('x-symbol', 'o-symbol');
+            });
+            
+            // Agregar event listeners a las celdas
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.addEventListener('click', handleCellClick);
+            });
+        }
+        
+        function handleCellClick(e) {
+            if (!gameActive) return;
+            
+            const index = e.target.getAttribute('data-index');
+            
+            if (ticTacToeBoard[index] !== '') return;
+            
+            ticTacToeBoard[index] = currentPlayer;
+            e.target.textContent = currentPlayer;
+            e.target.classList.add(currentPlayer === 'X' ? 'x-symbol' : 'o-symbol');
+            playSound('tic-tac-toe-sound');
+            
+            if (checkWin()) {
+                document.getElementById('game-status').textContent = 
+                    gameMode === 'human' ? `¡Jugador ${currentPlayer} gana!` : 
+                    currentPlayer === 'X' ? '¡Ganaste!' : '¡La IA gana!';
+                gameActive = false;
+                return;
+            }
+            
+            if (checkDraw()) {
+                document.getElementById('game-status').textContent = '¡Empate!';
+                gameActive = false;
+                return;
+            }
+            
+            if (gameMode === 'human') {
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                document.getElementById('game-status').textContent = `Turno del Jugador ${currentPlayer}`;
+            } else {
+                currentPlayer = 'O';
+                document.getElementById('game-status').textContent = 'La IA está pensando...';
+                setTimeout(makeAIMove, 500);
+            }
+        }
+        
+        function makeAIMove() {
+            if (!gameActive) return;
+            
+            let index;
+            
+            if (difficulty === 'easy') {
+                // Movimiento aleatorio
+                const emptyCells = [];
+                ticTacToeBoard.forEach((cell, i) => {
+                    if (cell === '') emptyCells.push(i);
+                });
+                
+                index = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            } else if (difficulty === 'medium') {
+                // Combinación de estrategia y aleatorio
+                index = findWinningMove('O') || findWinningMove('X') || 
+                        findRandomCorner() || findRandomMove();
+            } else {
+                // Dificultad difícil - algoritmo minimax
+                index = findBestMove();
+            }
+            
+            ticTacToeBoard[index] = 'O';
+            const cell = document.querySelector(`.cell[data-index="${index}"]`);
+            cell.textContent = 'O';
+            cell.classList.add('o-symbol');
+            playSound('tic-tac-toe-sound');
+            
+            if (checkWin()) {
+                document.getElementById('game-status').textContent = '¡La IA gana!';
+                gameActive = false;
+                return;
+            }
+            
+            if (checkDraw()) {
+                document.getElementById('game-status').textContent = '¡Empate!';
+                gameActive = false;
+                return;
+            }
+            
+            currentPlayer = 'X';
+            document.getElementById('game-status').textContent = 'Tu turno (X)';
+        }
+        
+        function findWinningMove(player) {
+            for (let i = 0; i < 9; i++) {
+                if (ticTacToeBoard[i] === '') {
+                    ticTacToeBoard[i] = player;
+                    if (checkWin()) {
+                        ticTacToeBoard[i] = '';
+                        return i;
+                    }
+                    ticTacToeBoard[i] = '';
+                }
+            }
+            return null;
+        }
+        
+        function findRandomCorner() {
+            const corners = [0, 2, 6, 8];
+            const emptyCorners = corners.filter(i => ticTacToeBoard[i] === '');
+            if (emptyCorners.length > 0) {
+                return emptyCorners[Math.floor(Math.random() * emptyCorners.length)];
+            }
+            return null;
+        }
+        
+        function findRandomMove() {
+            const emptyCells = [];
+            ticTacToeBoard.forEach((cell, i) => {
+                if (cell === '') emptyCells.push(i);
+            });
+            
+            if (emptyCells.length > 0) {
+                return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            }
+            return null;
+        }
+        
+        function findBestMove() {
+            let bestScore = -Infinity;
+            let bestMove = null;
+            
+            for (let i = 0; i < 9; i++) {
+                if (ticTacToeBoard[i] === '') {
+                    ticTacToeBoard[i] = 'O';
+                    const score = minimax(ticTacToeBoard, 0, false);
+                    ticTacToeBoard[i] = '';
+                    
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMove = i;
+                    }
+                }
+            }
+            
+            return bestMove;
+        }
+        
+        function minimax(board, depth, isMaximizing) {
+            if (checkWin('O')) return 10 - depth;
+            if (checkWin('X')) return depth - 10;
+            if (checkDraw()) return 0;
+            
+            if (isMaximizing) {
+                let bestScore = -Infinity;
+                
+                for (let i = 0; i < 9; i++) {
+                    if (board[i] === '') {
+                        board[i] = 'O';
+                        const score = minimax(board, depth + 1, false);
+                        board[i] = '';
+                        bestScore = Math.max(score, bestScore);
+                    }
+                }
+                
+                return bestScore;
+            } else {
+                let bestScore = Infinity;
+                
+                for (let i = 0; i < 9; i++) {
+                    if (board[i] === '') {
+                        board[i] = 'X';
+                        const score = minimax(board, depth + 1, true);
+                        board[i] = '';
+                        bestScore = Math.min(score, bestScore);
+                    }
+                }
+                
+                return bestScore;
+            }
+        }
+        
+        function checkWin() {
+            const winPatterns = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // Filas
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columnas
+                [0, 4, 8], [2, 4, 6]             // Diagonales
+            ];
+            
+            return winPatterns.some(pattern => {
+                const [a, b, c] = pattern;
+                return ticTacToeBoard[a] !== '' && 
+                       ticTacToeBoard[a] === ticTacToeBoard[b] && 
+                       ticTacToeBoard[a] === ticTacToeBoard[c];
+            });
+        }
+        
+        function checkDraw() {
+            return ticTacToeBoard.every(cell => cell !== '');
+        }
+        
+        // ========== SNAKE ==========
+        let snake = [];
+        let food = {};
+        let direction = 'right';
+        let nextDirection = 'right';
+        let snakeSpeed = 150;
+        let snakeGameInterval;
+        let snakeCtx;
+        
+        function initSnake() {
+            const canvas = document.getElementById('snake-canvas');
+            snakeCtx = canvas.getContext('2d');
+            
+            // Inicializar serpiente
+            snake = [
+                { x: 200, y: 200 },
+                { x: 190, y: 200 },
+                { x: 180, y: 200 },
+                { x: 170, y: 200 },
+                { x: 160, y: 200 }
+            ];
+            
+            direction = 'right';
+            nextDirection = 'right';
+            
+            generateFood();
+            
+            // Event listeners para controles
+            document.addEventListener('keydown', handleSnakeKeyDown);
+            
+            // Iniciar juego
+            if (snakeGameInterval) clearInterval(snakeGameInterval);
+            snakeGameInterval = setInterval(updateSnake, snakeSpeed);
+        }
+        
+        function stopSnake() {
+            clearInterval(snakeGameInterval);
+            document.removeEventListener('keydown', handleSnakeKeyDown);
+        }
+        
+        function handleSnakeKeyDown(e) {
+            switch (e.key) {
+                case 'ArrowUp':
+                    if (direction !== 'down') nextDirection = 'up';
+                    break;
+                case 'ArrowDown':
+                    if (direction !== 'up') nextDirection = 'down';
+                    break;
+                case 'ArrowLeft':
+                    if (direction !== 'right') nextDirection = 'left';
+                    break;
+                case 'ArrowRight':
+                    if (direction !== 'left') nextDirection = 'right';
+                    break;
+            }
+        }
+        
+        function generateFood() {
+            const canvas = document.getElementById}
