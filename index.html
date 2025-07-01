@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcade Retro</title>
+    <style>
+        /* Estilos generales */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+
+        body {
+            background-color: #000;
+            color: #0f0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Menú principal */
+        #main-menu {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #111;
+        }
+
+        .title {
+            font-size: 3rem;
+            margin-bottom: 3rem;
+            color: #ff0;
+            text-shadow: 0 0 10px #ff0, 0 0 20px #ff0;
+            letter-spacing: 0.5rem;
+        }
+
+        .games-container {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .game-card {
+            width: 200px;
+            height: 250px;
+            background-color: #222;
+            border: 3px solid #0f0;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .game-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px #0f0;
+            border-color: #ff0;
+        }
+
+        .game-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .game-title {
+            font-size: 1.5rem;
+            color: #ff0;
+        }
+
+        /* Pantallas de juego */
+        .game-screen {
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #000;
+            position: relative;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background-color: #f00;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 100;
+        }
+
+        .back-btn:hover {
+            background-color: #ff0;
+            color: #000;
+        }
+
+        /* Estilos específicos para Comecocos */
+        #pacman-canvas {
+            border: 5px solid #ff0;
+            box-shadow: 0 0 20px #ff0;
+        }
+
+        /* Estilos para 3 en raya */
+        #tic-tac-toe-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .tic-tac-toe-options {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .tic-tac-toe-btn {
+            padding: 10px 20px;
+            background-color: #00f;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .tic-tac-toe-btn:hover {
+            background-color: #ff0;
+            color: #000;
+        }
+
+        #difficulty-select {
+            margin-bottom: 2rem;
+            display: none;
+        }
+
+        #difficulty {
+            padding: 8px;
+            background-color: #222;
+            color: #0f0;
+            border: 2px solid #0f0;
+            margin-right: 10px;
+        }
+
+        #tic-tac-toe-board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 10px;
+            background-color: #0f0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3rem;
+            cursor: pointer;
+            color: #fff;
+        }
+
+        .cell.x {
+            color: #f00;
+        }
+
+        .cell.o {
+            color: #00f;
+        }
+
+        #game-status {
+            margin-top: 2rem;
+            font-size: 1.5rem;
+            color: #ff0;
+        }
+
+        /* Estilos para Snake */
+        #snake-canvas {
+            border: 5px solid #0f0;
+            box-shadow: 0 0 20px #0f0;
+        }
+
+        .snake-score {
+            margin-top: 1rem;
+            font-size: 1.5rem;
+            color: #ff0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Menú principal -->
+    <div id="main-menu">
+        <h1 class="title">ARCADE RETRO</h1>
+        <div class="games-container">
+            <div class="game-card" id="pacman-card">
+                <div class="game-icon">👻</div>
+                <div class="game-title">COMECOCOS</div>
+            </div>
+            <div class="game-card" id="tic-tac-toe-card">
+                <div class="game-icon">⭕❌</div>
+                <div class="game-title">3 EN RAYA</div>
+            </div>
+            <div class="game-card" id="snake-card">
+                <div class="game-icon">🐍</div>
+                <div class="game-title">SNAKE</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Pantalla de Comecocos -->
+    <div class="game-screen" id="pacman-screen">
+        <button class="back-btn">MENÚ</button>
+        <canvas id="pacman-canvas" width="600" height="600"></canvas>
+    </div>
+    
+    <!-- Pantalla de 3 en raya -->
+    <div class="game-screen" id="tic-tac-toe-screen">
+        <button class="back-btn">MENÚ</button>
+        <div id="tic-tac-toe-container">
+            <div class="tic-tac-toe-options">
+                <button class="tic-tac-toe-btn" id="play-vs-ai">VS COMPUTADORA</button>
+                <button class="tic-tac-toe-btn" id="play-vs-human">2 JUGADORES</button>
+            </div>
+            <div id="difficulty-select">
+                <select id="difficulty">
+                    <option value="easy">Fácil</option>
+                    <option value="medium">Medio</option>
+                    <option value="hard">Difícil</option>
+                </select>
+                <button class="tic-tac-toe-btn" id="start-ai-game">COMENZAR</button>
+            </div>
+            <div id="tic-tac-toe-board">
+                <div class="cell" data-index="0"></div>
+                <div class="cell" data-index="1"></div>
+                <div class="cell" data-index="2"></div>
+                <div class="cell" data-index="3"></div>
+                <div class="cell" data-index="4"></div>
+                <div class="cell" data-index="5"></div>
+                <div class="cell" data-index="6"></div>
+                <div class="cell" data-index="7"></div>
+                <div class="cell" data-index="8"></div>
+            </div>
+            <div id="game-status">Elige un modo de juego</div>
+        </div>
+    </div>
+    
+    <!-- Pantalla de Snake -->
+    <div class="game-screen" id="snake-screen">
+        <button class="back-btn">MENÚ</button>
+        <canvas id="snake-canvas" width="400" height="400"></canvas>
+        <div class="snake-score">Puntuación: <span id="snake-score">0</span></div>
+    </div>
+
+    <script>
+        // =============================================
+        // FUNCIONES GENERALES Y NAVEGACIÓN
+        // =============================================
+
+        // Elementos del DOM
+        const mainMenu = document.getElementById('main-menu');
+        const pacmanScreen = document.getElementById('pacman-screen');
+        const ticTacToeScreen = document.getElementById('tic-tac-toe-screen');
+        const snakeScreen = document.getElementById('snake-screen');
+        const backBtns = document.querySelectorAll('.back-btn');
+
+        // Event listeners para los botones de juego
+        document.getElementById('pacman-card').addEventListener('click', () => {
+            showGameScreen('pacman');
+            initPacman();
+        });
+
+        document.getElementById('tic-tac-toe-card').addEventListener('click', () => {
+            showGameScreen('tic-tac-toe');
+            initTicTacToe();
+        });
+
+        document.getElementById('snake-card').addEventListener('click', () => {
+            showGameScreen('snake');
+            initSnake();
+        });
+
+        // Event listeners para los botones de volver
+        backBtns.forEach(btn => {
+            btn.addEventListener('click', showMainMenu);
+        });
+
+        // Mostrar pantalla de juego
+        function showGameScreen(game) {
+            mainMenu.style.display = 'none';
+            pacmanScreen.style.display = 'none';
+            ticTacToeScreen.style.display = 'none';
+            snakeScreen.style.display = 'none';
+
+            if (game === 'pacman') {
+                pacmanScreen.style.display = 'flex';
+            } else if (game === 'tic-tac-toe') {
+                ticTacToeScreen.style.display = 'flex';
+            } else if (game === 'snake') {
+                snakeScreen.style.display = 'flex';
+            }
+        }
+
+        // Mostrar menú principal
+        function showMainMenu() {
+            // Detener cualquier juego en curso
+            if (pacmanInterval) clearInterval(pacmanInterval);
+            if (snakeInterval) clearInterval(snakeInterval);
+            
+            mainMenu.style.display = 'flex';
+            pacmanScreen.style.display = 'none';
+            ticTacToeScreen.style.display = 'none';
+            snakeScreen.style.display = 'none';
+        }
+
+        // =============================================
+        // COMECOCOS
+        // =============================================
+
+        let pacmanInterval;
+        const pacmanCanvas = document.getElementById('pacman-canvas');
+        const pacmanCtx = pacmanCanvas.getContext('2d');
+
+        function initPacman() {
+            // Configuración inicial del juego
+            let pacman = {
+                x: 300,
+                y: 300,
+                radius: 15,
+                speed: 5,
+                direction: { x: 0, y: 0 },
+                nextDirection: { x: 0, y: 0 },
+                mouthAngle: 0,
+                mouthOpen: true
+            };
+
+            let ghosts = [
+                { x: 100, y: 100, radius: 15, speed: 3, color: '#f00', direction: { x: 1, y: 0 } },
+                { x: 500, y: 100, radius: 15, speed: 3, color: '#0ff', direction: { x: -1, y: 0 } },
+                { x: 100, y: 500, radius: 15, speed: 3, color: '#f0f', direction: { x: 0, y: -1 } },
+                { x: 500, y: 500, radius: 15, speed: 3, color: '#ff0', direction: { x: 0, y: -1 } }
+            ];
+
+            let dots = [];
+            let score = 0;
+
+            // Inicializar puntos
+            for (let x = 30; x < pacmanCanvas.width; x += 60) {
+                for (let y = 30; y < pacmanCanvas.height; y += 60) {
+                    dots.push({ x, y, radius: 5, eaten: false });
+                }
+            }
+
+            // Event listener para controles
+            function handleKeyDown(e) {
+                switch (e.key) {
+                    case 'ArrowUp': pacman.nextDirection = { x: 0, y: -1 }; break;
+                    case 'ArrowDown': pacman.nextDirection = { x: 0, y: 1 }; break;
+                    case 'ArrowLeft': pacman.nextDirection = { x: -1, y: 0 }; break;
+                    case 'ArrowRight': pacman.nextDirection = { x: 1, y: 0 }; break;
+                }
+            }
+            document.addEventListener('keydown', handleKeyDown);
+
+            // Función principal del juego
+            function gameLoop() {
+                // Limpiar canvas
+                pacmanCtx.fillStyle = '#000';
+                pacmanCtx.fillRect(0, 0, pacmanCanvas.width, pacmanCanvas.height);
+
+                // Actualizar dirección del Comecocos
+                const nextX = pacman.x + pacman.nextDirection.x * pacman.speed;
+                const nextY = pacman.y + pacman.nextDirection.y * pacman.speed;
+                
+                if (nextX > pacman.radius && nextX < pacmanCanvas.width - pacman.radius &&
+                    nextY > pacman.radius && nextY < pacmanCanvas.height - pacman.radius) {
+                    pacman.direction = { ...pacman.nextDirection };
+                }
+
+                // Mover Comecocos
+                pacman.x += pacman.direction.x * pacman.speed;
+                pacman.y += pacman.direction.y * pacman.speed;
+
+                // Limitar dentro del canvas
+                pacman.x = Math.max(pacman.radius, Math.min(pacmanCanvas.width - pacman.radius, pacman.x));
+                pacman.y = Math.max(pacman.radius, Math.min(pacmanCanvas.height - pacman.radius, pacman.y));
+
+                // Animación de la boca
+                if (pacman.mouthOpen) {
+                    pacman.mouthAngle += 0.1;
+                    if (pacman.mouthAngle >= Math.PI / 4) pacman.mouthOpen = false;
+                } else {
+                    pacman.mouthAngle -= 0.1;
+                    if (pacman.mouthAngle <= 0) pacman.mouthOpen = true;
+                }
+
+                // Dibujar puntos y detectar colisiones
+                dots.forEach(dot => {
+                    if (!dot.eaten) {
+                        const distance = Math.sqrt(
+                            Math.pow(pacman.x - dot.x, 2) + Math.pow(pacman.y - dot.y, 2)
+                        );
+                        
+                        if (distance < pacman.radius + dot.radius) {
+                            dot.eaten = true;
+                            score += 10;
+                        }
+                        
+                        pacmanCtx.fillStyle = '#ff0';
+                        pacmanCtx.beginPath();
+                        pacmanCtx.arc(dot.x, dot.y, dot.radius, 0, Math.PI * 2);
+                        pacmanCtx.fill();
+                    }
+                });
+
+                // Dibujar Comecocos
+                pacmanCtx.fillStyle = '#ff0';
+                pacmanCtx.beginPath();
+                
+                let startAngle, endAngle;
+                if (pacman.direction.x === 1) {
+                    startAngle = pacman.mouthAngle;
+                    endAngle = Math.PI * 2 - pacman.mouthAngle;
+                } else if (pacman.direction.x === -1) {
+                    startAngle = Math.PI + pacman.mouthAngle;
+                    endAngle = Math.PI - pacman.mouthAngle;
+                } else if (pacman.direction.y === -1) {
+                    startAngle = Math.PI * 1.5 + pacman.mouthAngle;
+                    endAngle = Math.PI * 1.5 - pacman.mouthAngle;
+                } else if (pacman.direction.y === 1) {
+                    startAngle = Math.PI * 0.5 + pacman.mouthAngle;
+                    endAngle = Math.PI * 0.5 - pacman.mouthAngle;
+                } else {
+                    startAngle = pacman.mouthAngle;
+                    endAngle = Math.PI * 2 - pacman.mouthAngle;
+                }
+                
+                pacmanCtx.arc(pacman.x, pacman.y, pacman.radius, startAngle, endAngle);
+                
+                if (pacman.direction.x !== 0 || pacman.direction.y !== 0) {
+                    pacmanCtx.lineTo(pacman.x, pacman.y);
+                }
+                
+                pacmanCtx.fill();
+
+                // Mover y dibujar fantasmas
+                ghosts.forEach(ghost => {
+                    // Perseguir al Comecocos
+                    const dx = pacman.x - ghost.x;
+                    const dy = pacman.y - ghost.y;
+                    
+                    // Cambiar dirección ocasionalmente
+                    if (Math.random() < 0.02) {
+                        const directions = [
+                            { x: 1, y: 0 }, { x: -1, y: 0 }, 
+                            { x: 0, y: 1 }, { x: 0, y: -1 }
+                        ];
+                        
+                        // Elegir dirección que acerque al Comecocos
+                        let bestDir = ghost.direction;
+                        let minDistance = Infinity;
+                        
+                        directions.forEach(dir => {
+                            const newX = ghost.x + dir.x * ghost.speed;
+                            const newY = ghost.y + dir.y * ghost.speed;
+                            
+                            if (newX > ghost.radius && newX < pacmanCanvas.width - ghost.radius &&
+                                newY > ghost.radius && newY < pacmanCanvas.height - ghost.radius) {
+                                const newDx = pacman.x - newX;
+                                const newDy = pacman.y - newY;
+                                const newDistance = Math.sqrt(newDx * newDx + newDy * newDy);
+                                
+                                if (newDistance < minDistance) {
+                                    minDistance = newDistance;
+                                    bestDir = dir;
+                                }
+                            }
+                        });
+                        
+                        ghost.direction = bestDir;
+                    }
+                    
+                    ghost.x += ghost.direction.x * ghost.speed;
+                    ghost.y += ghost.direction.y * ghost.speed;
+                    
+                    // Limitar dentro del canvas
+                    ghost.x = Math.max(ghost.radius, Math.min(pacmanCanvas.width - ghost.radius, ghost.x));
+                    ghost.y = Math.max(ghost.radius, Math.min(pacmanCanvas.height - ghost.radius, ghost.y));
+                    
+                    // Dibujar fantasma
+                    pacmanCtx.fillStyle = ghost.color;
+                    pacmanCtx.beginPath();
+                    pacmanCtx.arc(ghost.x, ghost.y, ghost.radius, 0, Math.PI);
+                    
+                    // Parte inferior del fantasma
+                    for (let i = 0; i < 5; i++) {
+                        const x = ghost.x - ghost.radius + (ghost.radius * 2 / 4) * i;
+                        const y = ghost.y + Math.sin(i * 0.5) * 5;
+                        pacmanCtx.lineTo(x, y);
+                    }
+                    
+                    pacmanCtx.fill();
+                    
+                    // Ojos
+                    pacmanCtx.fillStyle = '#fff';
+                    pacmanCtx.beginPath();
+                    pacmanCtx.arc(ghost.x - 5, ghost.y - 5, 4, 0, Math.PI * 2);
+                    pacmanCtx.arc(ghost.x + 5, ghost.y - 5, 4, 0, Math.PI * 2);
+                    pacmanCtx.fill();
+                    
+                    // Pupilas
+                    pacmanCtx.fillStyle = '#00f';
+                    pacmanCtx.beginPath();
+                    pacmanCtx.arc(ghost.x - 5 + ghost.direction.x * 2, ghost.y - 5 + ghost.direction.y * 2, 2, 0, Math.PI * 2);
+                    pacmanCtx.arc(ghost.x + 5 + ghost.direction.x * 2, ghost.y - 5 + ghost.direction.y * 2, 2, 0, Math.PI * 2);
+                    pacmanCtx.fill();
+                    
+                    // Detectar colisión con Comecocos
+                    const ghostDistance = Math.sqrt(
+                        Math.pow(pacman.x - ghost.x, 2) + Math.pow(pacman.y - ghost.y, 2)
+                    );
+                    
+                    if (ghostDistance < pacman.radius + ghost.radius) {
+                        // Game over
+                        alert(`¡Game Over! Puntuación: ${score}`);
+                        clearInterval(pacmanInterval);
+                        document.removeEventListener('keydown', handleKeyDown);
+                        showMainMenu();
+                        return;
+                    }
+                });
+
+                // Mostrar puntuación
+                pacmanCtx.fillStyle = '#ff0';
+                pacmanCtx.font = '20px Arial';
+                pacmanCtx.fillText(`Puntuación: ${score}`, 20, 30);
+
+                // Verificar si se han comido todos los puntos
+                if (dots.every(dot => dot.eaten)) {
+                    alert(`¡Ganaste! Puntuación: ${score}`);
+                    clearInterval(pacmanInterval);
+                    document.removeEventListener('keydown', handleKeyDown);
+                    showMainMenu();
+                    return;
+                }
+            }
+
+            // Iniciar el juego
+            pacmanInterval = setInterval(gameLoop, 1000 / 60);
+        }
+
+        // =============================================
+        // 3 EN RAYA
+        // =============================================
+
+        function initTicTacToe() {
+            let board = ['', '', '', '', '', '', '', '', ''];
+            let currentPlayer = 'X';
+            let gameMode = null;
+            let gameActive = false;
+            let difficulty = 'medium';
+
+            // Elementos del DOM
+            const difficultySelect = document.getElementById('difficulty-select');
+            const cells = document.querySelectorAll('.cell');
+            const gameStatus = document.getElementById('game-status');
+            const playVsAI = document.getElementById('play-vs-ai');
+            const playVsHuman = document.getElementById('play-vs-human');
+            const startAIGame = document.getElementById('start-ai-game');
+
+            // Event listeners
+            playVsAI.addEventListener('click', () => {
+                gameMode = 'ai';
+                difficultySelect.style.display = 'block';
+                gameStatus.textContent = 'Selecciona dificultad';
+            });
+
+            playVsHuman.addEventListener('click', () => {
+                gameMode = 'human';
+                difficultySelect.style.display = 'none';
+                startGame();
+            });
+
+            startAIGame.addEventListener('click', () => {
+                difficulty = document.getElementById('difficulty').value;
+                startGame();
+            });
+
+            cells.forEach(cell => {
+                cell.addEventListener('click', handleCellClick);
+            });
+
+            // Función para iniciar el juego
+            function startGame() {
+                board = ['', '', '', '', '', '', '', '', ''];
+                currentPlayer = 'X';
+                gameActive = true;
+                
+                cells.forEach(cell => {
+                    cell.textContent = '';
+                    cell.classList.remove('x', 'o');
+                });
+                
+                gameStatus.textContent = gameMode === 'human' ? 'Turno del Jugador X' : 'Tu turno (X)';
+            }
+
+            // Función para manejar clics en las celdas
+            function handleCellClick(e) {
+                if (!gameActive) return;
+                
+                const index = e.target.getAttribute('data-index');
+                
+                if (board[index] !== '') return;
+                
+                board[index] = currentPlayer;
+                e.target.textContent = currentPlayer;
+                e.target.classList.add(currentPlayer.toLowerCase());
+                
+                if (checkWin()) {
+                    gameStatus.textContent = gameMode === 'human' ? 
+                        `¡Jugador ${currentPlayer} gana!` : 
+                        currentPlayer === 'X' ? '¡Ganaste!' : '¡La computadora gana!';
+                    gameActive = false;
+                    return;
+                }
+                
+                if (checkDraw()) {
+                    gameStatus.textContent = '¡Empate!';
+                    gameActive = false;
+                    return;
+                }
+                
+                if (gameMode === 'human') {
+                    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                    gameStatus.textContent = `Turno del Jugador ${currentPlayer}`;
+                } else {
+                    currentPlayer = 'O';
+                    gameStatus.textContent = 'La computadora está pensando...';
+                    setTimeout(makeAIMove, 500);
+                }
+            }
+
+            // Función para que la computadora haga un movimiento
+            function makeAIMove() {
+                if (!gameActive) return;
+                
+                let index;
+                
+                if (difficulty === 'easy') {
+                    // Movimiento aleatorio
+                    const emptyCells = [];
+                    board.forEach((cell, i) => {
+                        if (cell === '') emptyCells.push(i);
+                    });
+                    
+                    index = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                } else if (difficulty === 'medium') {
+                    // Combinación de estrategia y aleatorio
+                    index = findWinningMove('O') || findWinningMove('X') || 
+                            findRandomCorner() || findRandomMove();
+                } else {
+                    // Dificultad difícil - algoritmo minimax
+                    index = findBestMove();
+                }
+                
+                board[index] = 'O';
+                const cell = document.querySelector(`.cell[data-index="${index}"]`);
+                cell.textContent = 'O';
+                cell.classList.add('o');
+                
+                if (checkWin()) {
+                    gameStatus.textContent = '¡La computadora gana!';
+                    gameActive = false;
+                    return;
+                }
+                
+                if (checkDraw()) {
+                    gameStatus.textContent = '¡Empate!';
+                    gameActive = false;
+                    return;
+                }
+                
+                currentPlayer = 'X';
+                gameStatus.textContent = 'Tu turno (X)';
+            }
+
+            // Funciones auxiliares para la IA
+            function findWinningMove(player) {
+                for (let i = 0; i < 9; i++) {
+                    if (board[i] === '') {
+                        board[i] = player;
+                        if (checkWin()) {
+                            board[i] = '';
+                            return i;
+                        }
+                        board[i] = '';
+                    }
+                }
+                return null;
+            }
+
+            function findRandomCorner() {
+                const corners = [0, 2, 6, 8];
+                const emptyCorners = corners.filter(i => board[i] === '');
+                if (emptyCorners.length > 0) {
+                    return emptyCorners[Math.floor(Math.random() * emptyCorners.length)];
+                }
+                return null;
+            }
+
+            function findRandomMove() {
+                const emptyCells = [];
+                board.forEach((cell, i) => {
+                    if (cell === '') emptyCells.push(i);
+                });
+                
+                if (emptyCells.length > 0) {
+                    return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+                }
+                return null;
+            }
+
+            function findBestMove() {
+                let bestScore = -Infinity;
+                let bestMove = null;
+                
+                for (let i = 0; i < 9; i++) {
+                    if (board[i] === '') {
+                        board[i] = 'O';
+                        const score = minimax(board, 0, false);
+                        board[i] = '';
+                        
+                        if (score > bestScore) {
+                            bestScore = score;
+                            bestMove = i;
+                        }
+                    }
+                }
+                
+                return bestMove;
+            }
+
+            function minimax(board, depth, isMaximizing) {
+                if (checkWin('O')) return 10 - depth;
+                if (checkWin('X')) return depth - 10;
+                if (checkDraw()) return 0;
+                
+                if (isMaximizing) {
+                    let bestScore = -Infinity;
+                    
+                    for (let i = 0; i < 9; i++) {
+                        if (board[i] === '') {
+                            board[i] = 'O';
+                            const score = minimax(board, depth + 1, false);
+                            board[i] = '';
+                            bestScore = Math.max(score, bestScore);
+                        }
+                    }
+                    
+                    return bestScore;
+                } else {
+                    let bestScore = Infinity;
+                    
+                    for (let i = 0; i < 9; i++) {
+                        if (board[i] === '') {
+                            board[i] = 'X';
+                            const score = minimax(board, depth + 1, true);
+                            board[i] = '';
+                            bestScore = Math.min(score, bestScore);
+                        }
+                    }
+                    
+                    return bestScore;
+                }
+            }
+
+            // Función para verificar si hay un ganador
+            function checkWin() {
+                const winPatterns = [
+                    [0, 1, 2], [3, 4, 5], [6, 7, 8], // Filas
+                    [0, 3, 6], [1, 4, 7], [2, 5, 8], // Columnas
+                    [0, 4, 8], [2, 4, 6]             // Diagonales
+                ];
+                
+                return winPatterns.some(pattern => {
+                    const [a, b, c] = pattern;
+                    return board[a] !== '' && 
+                           board[a] === board[b] && 
+                           board[a] === board[c];
+                });
+            }
+
+            // Función para verificar empate
+            function checkDraw() {
+                return board.every(cell => cell !== '');
+            }
+        }
+
+        // =============================================
+        // SNAKE
+        // =============================================
+
+        let snakeInterval;
+        const snakeCanvas = document.getElementById('snake-canvas');
+        const snakeCtx = snakeCanvas.getContext('2d');
+        const snakeScoreElement = document.getElementById('snake-score');
+
+        function initSnake() {
+            // Configuración inicial del juego
+            let snake = [
+                { x: 200, y: 200 },
+                { x: 190, y: 200 },
+                { x: 180, y: 200 },
+                { x: 170, y: 200 },
+                { x: 160, y: 200 }
+            ];
+            
+            let food = generateFood();
+            let direction = 'right';
+            let nextDirection = 'right';
+            let score = 0;
+            let speed = 150;
+
+            // Event listener para controles
+            function handleKeyDown(e) {
+                switch (e.key) {
+                    case 'ArrowUp': if (direction !== 'down') nextDirection = 'up'; break;
+                    case 'ArrowDown': if (direction !== 'up') nextDirection = 'down'; break;
+                    case 'ArrowLeft': if (direction !== 'right') nextDirection = 'left'; break;
+                    case 'ArrowRight': if (direction !== 'left') nextDirection = 'right'; break;
+                }
+            }
+            document.addEventListener('keydown', handleKeyDown);
+
+            // Función principal del juego
+            function gameLoop() {
+                direction = nextDirection;
+                
+                // Mover la serpiente
+                const head = { ...snake[0] };
+                
+                switch (direction) {
+                    case 'up': head.y -= 10; break;
+                    case 'down': head.y += 10; break;
+                    case 'left': head.x -= 10; break;
+                    case 'right': head.x += 10; break;
+                }
+                
+                // Verificar colisión con los bordes
+                if (head.x < 0 || head.x >= snakeCanvas.width || 
+                    head.y < 0 || head.y >= snakeCanvas.height) {
+                    gameOver();
+                    return;
+                }
+                
+                // Verificar colisión consigo misma
+                if (snake.some(segment => segment.x === head.x && segment.y === head.y)) {
+                    gameOver();
+                    return;
+                }
+                
+                // Agregar nueva cabeza
+                snake.unshift(head);
+                
+                // Verificar si comió la comida
+                if (head.x === food.x && head.y === food.y) {
+                    score += 10;
+                    snakeScoreElement.textContent = score;
+                    
+                    // Aumentar velocidad cada 50 puntos
+                    if (score % 50 === 0 && speed > 50) {
+                        speed -= 10;
+                        clearInterval(snakeInterval);
+                        snakeInterval = setInterval(gameLoop, speed);
+                    }
+                    
+                    food = generateFood();
+                } else {
+                    // Si no comió, quitar la cola
+                    snake.pop();
+                }
+                
+                // Dibujar el juego
+                snakeCtx.fillStyle = '#000';
+                snakeCtx.fillRect(0, 0, snakeCanvas.width, snakeCanvas.height);
+                
+                // Dibujar la serpiente
+                snake.forEach((segment, index) => {
+                    snakeCtx.fillStyle = index === 0 ? '#0f0' : '#0a0';
+                    snakeCtx.fillRect(segment.x, segment.y, 10, 10);
+                    snakeCtx.strokeStyle = '#000';
+                    snakeCtx.strokeRect(segment.x, segment.y, 10, 10);
+                });
+                
+                // Dibujar la comida
+                snakeCtx.fillStyle = '#f00';
+                snakeCtx.fillRect(food.x, food.y, 10, 10);
+            }
+
+            // Función para generar comida
+            function generateFood() {
+                const x = Math.floor(Math.random() * (snakeCanvas.width / 10)) * 10;
+                const y = Math.floor(Math.random() * (snakeCanvas.height / 10)) * 10;
+                
+                // Asegurarse de que la comida no aparezca sobre la serpiente
+                if (snake.some(segment => segment.x === x && segment.y === y)) {
+                    return generateFood();
+                }
+                
+                return { x, y };
+            }
+
+            // Función para terminar el juego
+            function gameOver() {
+                clearInterval(snakeInterval);
+                document.removeEventListener('keydown', handleKeyDown);
+                alert(`¡Game Over! Puntuación: ${score}`);
+                showMainMenu();
+            }
+
+            // Iniciar el juego
+            snakeScoreElement.textContent = '0';
+            snakeInterval = setInterval(gameLoop, speed);
+        }
+    </script>
+</body>
+</html>
